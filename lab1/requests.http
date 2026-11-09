@@ -1,0 +1,87 @@
+@baseUrl = http://127.0.0.1:3000/api/v1
+@productId = 1
+@phraseId = 1
+
+### Lista produktów
+GET {{baseUrl}}/products
+
+### Dodanie produktu — 201 i Location
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Laptop123",
+  "category": "Elektronika",
+  "price": 2499.99,
+  "quantity": 4
+}
+
+### Szczegóły — podmień productId na ID otrzymane przy dodaniu
+GET {{baseUrl}}/products/{{productId}}
+
+### Edycja produktu — PUT wymaga wszystkich czterech pól
+PUT {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "Laptop123",
+  "category": "Elektronika",
+  "price": 2299.99,
+  "quantity": 2
+}
+
+### Historia zmian
+GET {{baseUrl}}/products/{{productId}}/history
+
+### Błędy pól — 400
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "A!",
+  "category": "Książki",
+  "price": 501,
+  "quantity": -1
+}
+
+### Dynamiczne dodanie zabronionej frazy
+POST {{baseUrl}}/forbidden-phrases
+Content-Type: application/json
+
+{
+  "phrase": "laptop"
+}
+
+### Lista fraz
+GET {{baseUrl}}/forbidden-phrases
+
+### Nazwa zawiera zabronioną frazę — 400
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "SuperLaptop123",
+  "category": "Elektronika",
+  "price": 3000,
+  "quantity": 1
+}
+
+### Edycja też podlega blokadzie — 400, jeśli fraza laptop jest na liście
+PUT {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "Laptop123",
+  "category": "Elektronika",
+  "price": 2199.99,
+  "quantity": 1
+}
+
+### Usunięcie frazy znosi blokadę — podmień phraseId na ID dodanej frazy
+DELETE {{baseUrl}}/forbidden-phrases/{{phraseId}}
+
+### Usunięcie produktu — 204
+DELETE {{baseUrl}}/products/{{productId}}
+
+### Historia jest dostępna także po usunięciu produktu
+GET {{baseUrl}}/products/{{productId}}/history

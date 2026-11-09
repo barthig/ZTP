@@ -1,0 +1,79 @@
+name: ztp-lab2
+
+x-app: &app
+  build: .
+  environment:
+    DATABASE_URL: postgresql+psycopg://lab2:lab2@db:5432/lab2
+    BROKER_URL: amqp://lab2:lab2@rabbitmq:5672//
+    QUIET_START: ${QUIET_START:-22}
+    QUIET_END: ${QUIET_END:-7}
+    RETRY_SECONDS: 5
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+    rabbitmq:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: lab2
+      POSTGRES_PASSWORD: lab2
+      POSTGRES_DB: lab2
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab2 -d lab2"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: lab2
+      RABBITMQ_DEFAULT_PASS: lab2
+    ports:
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  migrate:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://lab2:lab2@db:5432/lab2
+    command: alembic upgrade head
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+
+  scheduler:
+    <<: *app
+    command: python -m app.scheduler
+    restart: unless-stopped
+
+  email-worker:
+    <<: *app
+    command: celery -A app.tasks:celery worker -Q email --pool=solo --concurrency=1 --loglevel=info --hostname=email@%h
+    restart: unless-stopped
+
+  push-worker:
+    <<: *app
+    command: celery -A app.tasks:celery worker -Q push --pool=solo --concurrency=1 --loglevel=info --hostname=push@%h
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  rabbit_data:

@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+data/
+vendor/
+test/
+*.pdf
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.log
+README.md
+requests.http

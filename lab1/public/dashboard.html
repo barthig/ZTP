@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Panel zarządzania produktami, zabronionymi frazami i historią zmian.">
+  <title>Produkty — panel zarządzania</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%231d4ed8'/%3E%3Ctext x='20' y='28' font-family='Arial' font-size='27' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">P</span><span>Produkty<span class="brand-caption">Panel zarządzania</span></span></div>
+    <div class="connection" id="connection" role="status"><span class="dot"></span><span id="connection-text">Łączenie…</span></div>
+  </header>
+  <main>
+    <div class="page-heading"><div><p class="eyebrow">TWÓJ KATALOG</p><h1>Wszystko na swoim miejscu.</h1><p class="intro">Zarządzaj produktami i miej kontrolę nad każdą zmianą.</p></div><button type="button" id="refresh" class="button secondary">↻ Odśwież dane</button></div>
+    <nav class="tabs" aria-label="Sekcje panelu">
+      <button type="button" class="tab active" data-view="products" aria-current="page">Produkty <span id="product-count" class="counter">0</span></button>
+      <button type="button" class="tab" data-view="phrases">Zabronione frazy <span id="phrase-count" class="counter">0</span></button>
+      <button type="button" class="tab" data-view="history">Historia zmian</button>
+    </nav>
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+    <section id="view-products" class="view" aria-label="Produkty">
+      <div class="product-layout">
+        <section class="card form-card">
+          <div class="card-heading"><span class="section-icon" aria-hidden="true">＋</span><div><h2 id="form-title">Dodaj produkt</h2><p id="form-description">Wypełnij dane nowego produktu.</p></div></div>
+          <form id="product-form" novalidate>
+            <div class="field"><label for="name">Nazwa produktu</label><input id="name" name="name" placeholder="np. Laptop123" maxlength="20" required aria-describedby="name-hint error-name"><small id="name-hint">3–20 znaków. Tylko litery i cyfry, bez spacji.</small><span class="field-error" id="error-name"></span></div>
+            <div class="field"><label for="category">Kategoria</label><select id="category" name="category" aria-describedby="error-category"><option>Elektronika</option><option>Książki</option><option>Odzież</option></select><span class="field-error" id="error-category"></span></div>
+            <div class="form-row"><div class="field"><label for="price">Cena <span class="label-unit">PLN</span></label><input id="price" name="price" type="number" step="0.01" placeholder="0,00" required aria-describedby="price-hint error-price"><small id="price-hint"></small><span class="field-error" id="error-price"></span></div><div class="field"><label for="quantity">Ilość <span class="label-unit">szt.</span></label><input id="quantity" name="quantity" type="number" min="0" max="9007199254740991" step="1" value="0" required aria-describedby="error-quantity"><small>Minimum 0 sztuk.</small><span class="field-error" id="error-quantity"></span></div></div>
+            <button type="submit" id="save-product" class="button primary wide">Dodaj produkt</button>
+            <button type="button" id="cancel-edit" class="button secondary wide" hidden>Anuluj edycję</button>
+          </form>
+          <div class="form-note"><span aria-hidden="true">✓</span> Dane są sprawdzane przed zapisem.</div>
+        </section>
+        <section class="card catalog-card">
+          <div class="catalog-heading"><div><h2>Katalog produktów</h2><p id="catalog-caption">Twoje produkty w jednym miejscu.</p></div><label class="search"><span class="sr-only">Szukaj produktu po nazwie lub kategorii</span><input id="search" type="search" placeholder="Szukaj produktu…"></label></div>
+          <div class="table-wrap"><table><thead><tr><th>Produkt</th><th>Kategoria</th><th class="numeric">Cena</th><th class="numeric">Ilość</th><th><span class="sr-only">Działania</span></th></tr></thead><tbody id="product-rows"></tbody></table></div>
+          <div id="products-empty" class="empty"><div class="empty-icon" aria-hidden="true">▦</div><h3 id="empty-title">Nie masz jeszcze produktów</h3><p id="empty-description">Dodaj pierwszy produkt w formularzu obok.<br>Wszystkie zapisane produkty pojawią się tutaj.</p></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="view-phrases" class="view" aria-label="Zabronione frazy" hidden>
+      <div class="product-layout">
+        <section class="card form-card"><div class="card-heading"><span class="section-icon" aria-hidden="true">⊘</span><div><h2>Dodaj zabronioną frazę</h2><p>Określ, czego nie może zawierać nazwa.</p></div></div><form id="phrase-form" novalidate><div class="field"><label for="phrase">Fraza</label><input id="phrase" name="phrase" placeholder="np. laptop" maxlength="100" required aria-describedby="phrase-hint error-phrase"><small id="phrase-hint">Blokada działa też wewnątrz nazwy i ignoruje wielkość liter.</small><span class="field-error" id="error-phrase"></span></div><button type="submit" class="button primary wide">Dodaj frazę</button></form><div class="form-note">Frazy blokują dodawanie i edycję produktów. Usunięcie frazy znosi blokadę.</div></section>
+        <section class="card list-card"><div class="catalog-heading"><div><h2>Lista zabronionych fraz</h2><p>Zmiany obowiązują od razu po zapisaniu.</p></div></div><ul id="phrase-list" class="phrase-list"></ul><div id="phrases-empty" class="empty"><div class="empty-icon" aria-hidden="true">✓</div><h3>Brak zabronionych fraz</h3><p>Dodaj frazę, aby ograniczyć nazwy produktów.</p></div></section>
+      </div>
+    </section>
+
+    <section id="view-history" class="view" aria-label="Historia zmian" hidden>
+      <section class="card history-card"><div class="catalog-heading"><div><h2>Historia zmian produktu</h2><p>Sprawdź zmiany nazwy, kategorii, ceny i ilości. Historia zostaje również po usunięciu produktu.</p></div></div><form id="history-form" class="history-search" novalidate><div class="field"><label for="history-id">ID produktu</label><input id="history-id" type="number" min="1" step="1" placeholder="np. 1" required></div><button type="submit" class="button primary">Pokaż historię</button></form><div id="history-results"><div class="empty"><div class="empty-icon" aria-hidden="true">↺</div><h3>Każda zmiana ma swoją historię</h3><p>Wpisz ID produktu lub wybierz „Historia” na liście produktów.</p></div></div></section>
+    </section>
+    <footer>Panel produktów <span>Produkty · reguły nazw · historia zmian</span></footer>
+  </main>
+  <dialog id="confirm-dialog"><form method="dialog"><span class="section-icon danger-icon" aria-hidden="true">×</span><h2 id="confirm-title">Usunąć produkt?</h2><p id="confirm-description"></p><div class="dialog-actions"><button value="cancel" class="button secondary" autofocus>Anuluj</button><button value="delete" class="button danger">Usuń</button></div></form></dialog>
+</body>
+</html>

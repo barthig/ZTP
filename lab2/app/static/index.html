@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#143f3b">
+  <title>Powiadomienia · Laboratorium 2</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Panel powiadomień"><span class="brand-icon" aria-hidden="true">↗</span> Powiadomienia <span class="lab-label">LAB 02</span></a>
+    <a href="/docs" target="_blank" rel="noopener">Dokumentacja API ↗</a>
+  </header>
+  <main>
+    <div class="page-heading">
+      <div><p class="eyebrow">SYMULATOR DOSTARCZANIA WIADOMOŚCI</p><h1>Wszystko pod kontrolą.</h1><p class="subtitle">Zaplanuj, wyślij i sprawdź, co dotarło do odbiorcy.</p></div>
+      <span class="connection" id="connection" role="status">Łączenie…</span>
+    </div>
+
+    <div id="message" class="message" role="status" hidden></div>
+    <noscript><p class="message error">Włącz JavaScript, aby korzystać z panelu.</p></noscript>
+
+    <div class="workspace">
+      <section class="card composer" aria-labelledby="form-title">
+        <div class="section-heading"><span class="step-number">01</span><h2 id="form-title">Nowe powiadomienie</h2></div>
+        <form id="notification-form">
+          <label for="recipient">Odbiorca</label>
+          <input id="recipient" name="recipient" maxlength="200" placeholder="np. student@example.com" required>
+          <label for="content">Treść wiadomości</label>
+          <textarea id="content" name="content" rows="3" maxlength="5000" placeholder="O czym chcesz przypomnieć?" required></textarea>
+          <div class="form-row">
+            <div><label for="channel">Kanał</label><select id="channel" name="channel"><option value="email">E-mail</option><option value="push">Push</option></select></div>
+            <div><label for="priority">Priorytet</label><select id="priority" name="priority"><option value="low">Niski</option><option value="high">Wysoki</option></select></div>
+          </div>
+          <label for="scheduled-at">Termin wysyłki</label>
+          <input id="scheduled-at" name="scheduled_at" type="datetime-local" step="1" required aria-describedby="date-help">
+          <p class="field-help" id="date-help"></p>
+          <label for="timezone">Strefa czasowa odbiorcy</label>
+          <input id="timezone" name="timezone" value="Europe/Warsaw" list="timezones" maxlength="100" required aria-describedby="quiet-help">
+          <datalist id="timezones"><option value="Europe/Warsaw"><option value="Europe/London"><option value="America/New_York"><option value="Asia/Tokyo"><option value="UTC"></datalist>
+          <p class="field-help" id="quiet-help">Wczytywanie zasad ciszy nocnej…</p>
+          <label for="failures">Symulowane błędy przed sukcesem</label>
+          <select id="failures" name="simulate_failures"><option value="0">0 — sukces przy pierwszej próbie</option><option value="1">1 — sukces przy drugiej próbie</option><option value="2">2 — sukces przy trzeciej próbie</option><option value="3">3 — wszystkie próby nieudane</option></select>
+          <button type="submit" class="primary full" id="submit-button">Zaplanuj powiadomienie <span aria-hidden="true">→</span></button>
+        </form>
+        <div class="demo-box">
+          <p><strong>Przykład do prezentacji</strong><br>Uzupełni formularz, wybierze termin za 15 sekund i odbiorcę, u którego jest dzień.</p>
+          <button type="button" id="fill-example" class="secondary full">Wypełnij przykład</button>
+        </div>
+      </section>
+
+      <section class="card monitor" aria-labelledby="list-title">
+        <div class="monitor-header"><div class="section-heading"><span class="step-number">02</span><h2 id="list-title">Przebieg wysyłki</h2></div><button id="refresh" type="button" class="secondary">Odśwież ↻</button></div>
+        <p class="monitor-help">Statusy odświeżają się automatycznie co 3 sekundy. Dostarczenie jest symulowane.</p>
+        <div class="summary" aria-label="Podsumowanie bieżącej strony">
+          <div><span class="stat-label">Na tej stronie</span><strong id="stat-all">—</strong></div>
+          <div><span class="stat-label">Oczekujące</span><strong id="stat-waiting">—</strong></div>
+          <div><span class="stat-label">Dostarczone</span><strong id="stat-sent">—</strong></div>
+          <div><span class="stat-label">Błędy końcowe</span><strong id="stat-failed">—</strong></div>
+        </div>
+        <div class="filters"><label for="status-filter">Pokaż status</label><select id="status-filter"><option value="">Wszystkie</option><option value="pending">Oczekujące</option><option value="queued">W kolejce</option><option value="sent">Dostarczone</option><option value="failed">Błąd końcowy</option><option value="cancelled">Anulowane</option></select></div>
+        <div class="table-wrap">
+          <table><caption class="sr-only">Lista powiadomień i dostępne operacje</caption><thead><tr><th scope="col">Wiadomość</th><th scope="col">Termin u odbiorcy</th><th scope="col">Status / próby</th><th scope="col">Działania</th></tr></thead><tbody id="notifications"><tr><td colspan="4" class="empty">Wczytywanie powiadomień…</td></tr></tbody></table>
+        </div>
+        <div class="pagination"><span id="page-info">Strona 1</span><div><button id="previous-page" type="button" class="secondary" disabled>← Poprzednia</button><button id="next-page" type="button" class="secondary" disabled>Następna →</button></div></div>
+        <p class="legend"><span class="legend-dot"></span> „Wyślij teraz” respektuje ciszę nocną. Historia pokazuje każdą zakończoną próbę.</p>
+      </section>
+      <aside class="card inbox" aria-labelledby="inbox-title">
+        <div class="section-heading"><span class="step-number">03</span><h2 id="inbox-title">Skrzynka odbiorcza</h2></div>
+        <p class="inbox-intro">Podgląd strony odbiorcy. Wiadomość pojawia się tu dopiero po przetworzeniu przez worker.</p>
+        <form id="inbox-filter">
+          <label for="inbox-recipient">Odbiorca (opcjonalnie)</label>
+          <input id="inbox-recipient" maxlength="200" placeholder="np. student@example.com">
+          <label for="inbox-channel">Kanał</label>
+          <select id="inbox-channel"><option value="">E-mail i push</option><option value="email">E-mail</option><option value="push">Push</option></select>
+          <button type="submit" class="secondary full">Pokaż odebrane</button>
+        </form>
+        <p class="inbox-state" id="inbox-state" role="status">Wczytywanie skrzynki…</p>
+        <div id="inbox-list"></div>
+        <p class="inbox-note">Symulowany odbiór — bez prawdziwej skrzynki pocztowej i telefonu. Widok pobiera zapisane dostarczenia, niezależnie od statusów na liście obok.</p>
+      </aside>
+    </div>
+    <footer>Laboratorium 2 · Python / FastAPI / Celery <span>Symulacja e-mail i push</span></footer>
+  </main>
+
+  <dialog id="history-dialog" aria-labelledby="history-title">
+    <div class="dialog-header"><h2 id="history-title">Historia powiadomienia</h2><button class="secondary" id="close-history" type="button" autofocus>Zamknij ×</button></div>
+    <div id="history-detail"></div>
+    <div id="history-attempts" aria-live="polite"></div>
+  </dialog>
+</body>
+</html>

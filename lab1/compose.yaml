@@ -1,0 +1,14 @@
+services:
+  api:
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:${PORT:-3000}:80"
+    environment:
+      DB_PATH: /var/www/html/data/products.sqlite
+    volumes:
+      - products-data:/var/www/html/data
+    restart: unless-stopped
+
+volumes:
+  products-data:

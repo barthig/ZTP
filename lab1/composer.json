@@ -1,0 +1,17 @@
+{
+  "name": "nztp/lab1-products-api",
+  "description": "Laboratorium 1: REST API produktów w PHP, N-Layer, PDO SQLite i testy HTTP",
+  "type": "project",
+  "require": {
+    "php": ">=8.2",
+    "ext-pdo": "*",
+    "ext-pdo_sqlite": "*",
+    "ext-mbstring": "*",
+    "ext-intl": "*"
+  },
+  "require-dev": { "ext-curl": "*" },
+  "scripts": {
+    "start": "@php -S 127.0.0.1:3000 -t public public/index.php",
+    "test": "@php tests/run.php"
+  }
+}
